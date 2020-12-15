@@ -22,6 +22,10 @@ Example data is genotyped on the Illumina MEGA array (~1.7M markers). 420 TB cas
       - Collapse into BED files 
       - Visualize karyogams 
  6. Local Ancestry Association Adjusted models (LAAA model) 
+      - Create dosage files for each ancestry
+      - Fit statistical models 
+      - Run models 
+      - Visualise with Manhattan plots 
 
 ### Software required for analysis 
 
@@ -41,7 +45,7 @@ Check for any phenotypic information of population under investigation, in order
 ```
 plink --bfile filename --mind 0.1 --hwe 0.05 -chr1-22 --make-bed --out outputfile
 ```
-*Therefore, all filtering for participants occur before merging, since we want to remove them from the begining and exclude them from analysis. 
+**Therefore, all filtering for participants occur before merging, since we want to remove them from the begining and exclude them from analysis. 
 
 ## 02-Relatedness estimation 
 We need to check and remove related indivduals before merging with ancestral populations. The software KING and kinship coefficient is sufficient to identify close relationships between participants who have extensive population strcuture. 
@@ -74,17 +78,41 @@ Remove any SNPs (markers) with a 5% missingness and filter out any minor allele 
 plink --bfile inputfile --geno 0.5 --maf 0.03 --make-bed --out outputfile 
 ```
 
-*Therefore, all filtering for SNPs (markers) occur after merging of admixed and ancestral populations, since we want to include as much as possible SNPs to infer ancestry information. 
+**Therefore, all filtering for SNPs (markers) occur after merging of admixed and ancestral populations, since we want to include as much as possible SNPs to infer ancestry information. 
 
 You should now have filtered binary files with both ancestral and admixed paticipants (.bed, .bim, .fam) and should be ready to infer ancestry with these files. 
 
 ## 05-Ancestry inference 
 ### a. Global Ancestry Inference 
 
+You need prune the data before inferring global ancestry, since we only want the haplotypes in tight LD blocks. Therefore LD pruning will be conducted. 
 
+```
+plink --bfile inputfile --indep-pairwise 50 10 0.1 
+```
+Remove pruned.out file fom data. 
 
+```
+plink --bfile inputfile --extract plink.prune.in --make-bed --out outputfile 
+```
+Run ADMIXTURE software on filtered binary files. 
 
+```
+for k in {3..10}; do ../Software/admixture_linux-1.3.0/admixture --cv SAC_PAGE_1000G_geno05_maf003_unrelated_LD_pruned.bed ${k} -j4 | tee log${k}; done
+```
+Visulaise results with PONG. 
+The following inputfiles are required: 
 
+1. pong_filemap
+2. pop_order
+3. ind2pop
+
+Run pong software: 
+
+```
+pong -m pong_filemap -n pop_order -i pop_ids
+```
+**The global ancestry results obtained from this step is crucial to examine if the correct reference/ancestral populations are used for ancestry inference, since local ancestry dosage files will require these populations to determine allele dosages for ancestries, which are then included as covariates in statistical models. 
 
 ### b. Local Ancestry Inference 
 A recombination map are used to phase data, therefore inferring where each allele came from which parent. We are using the African American genetic map build 37. This map was based on data from the HapMap consortium and includes genetic data from individuals with 80% West African ancestry and 20% European ancestry. 
@@ -106,6 +134,18 @@ python split_phased.py --haps inputfile.haps --sample inputfile.sample --fam inp
 ```
 *_This will generate the allele_info file required for the LAAA model_
 
+Addtional modifications to generate allele input information for LAAA model. 
+Cut out first 5 columns: 
+```
+cut -d " " -f 6- inputfile.haps > outputfile.haps 
+```
+**It is important to make sure the dimensions corresponds to the dimensions in the .msp.tsv file
+
+Take out the spaces between the zeros and ones: 
+```
+sed 's/ //g' inputfile.haps > outputfiles.haps 
+```
+**File is ready to be used in LAA models 
 
 4. Convert phased binary files back to vcf format 
 ```
@@ -125,9 +165,54 @@ rfmix -f inputfile_query.vcf -r inputfile_reference.vcf -m sample_map_SAC -g gen
 
 #### Outputfiles RFMix
 
-1. 
+1. rfmix.Q
+2. sis.tsv
+3. msp.tsv - using this file for LAAA model, provides ancestry per allele
+4. fb.tsv
 
 
+**Additional modifications for inputfiles for LAAA model to provide ancestry information. You need to make a .msp.tsv for all five ancestries, therefore the ancestry of interest is coded as 2 and all the other ancestries are coded as 1. As well as indicating all the genomic regions per file, since RFMix provides only the collapsed files, which does not contain all the genomic positions. 
+
+Script used to modify the RFMix Viterbri file to use in the LAAA model ```Make_viterbi_files.R```. 
+
+## 06 - Local ancestry adjusted association models 
+
+This pipeline is adapted from the one described in https://ncbi.nlm.gov/pmc/articles/PMC5851818. Note the statistical model described in the LAAA model counts the number of copies of the reference allele, but in the software implementation, the number of copies of the alternate allele (which is more likely to be of interest) is counted. 
+Steps: 
+
+1. Create dosage files for each ancestry 
+2. Fit statistical models
+3. Run models 
+4. Use STEAM to permute data to determine significance theshold 
+5. Summarise and visualise results 
+
+
+#### 01-Create dosage files: 
+
+Inputfiles required in order to run ```create_dose_frame.py``` 
+
+1. Allele information files obtained from phasing (.haps file)
+2. RFMix Viterbri (.msp.tsv) output file modified for each ancestry
+3. SNP info file - (base pair position; ref allele; alt allele)
+4. Sample ID info file - List of sample IDs in a single column 
+5. Begin genomic position 
+6. End genomic position 
+
+Make SNP info file. 
+```
+for i in {1..22}; do awk '{print $3, $4, $5}' SAC_1000G_filtered_chr${i}_phased > /home/yolandi01/05-LAAA_model/01-Make_dosage_files/SNP_info_file_chr${i} ; done 
+```
+
+Output three important files for each ancestry required for statistical analysis: 
+
+1. ancestry dose file (0 = other ancestry, 1 = ancestry of interest)
+2. allele dose file (0 = major allele, 1 = minor allele)
+3. ancestry + alelle dose file (0 = Minor allele + ancestry not on the same haplotype; 1 = Minor allele + ancestry are on the same haplotype)
+
+**Need to obtain all three files for each ancestry 
+
+
+#### 02-Fit statistical models 
 
 
 
