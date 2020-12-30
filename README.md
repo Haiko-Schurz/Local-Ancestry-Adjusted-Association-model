@@ -132,20 +132,21 @@ shapeit --input-bed inputfile.bed inputfile.bim inputfile.fam --input-map recomb
 ```
 python split_phased.py --haps inputfile.haps --sample inputfile.sample --fam inputfile.fam --out outputfile 
 ```
-*_This will generate the allele_info file required for the LAAA model_
+*_This will generate the allele_info file required for the LAAA model_*
 
-Addtional modifications to generate allele input information for LAAA model. 
+Addtional modifications to generate allele input information for LAAA model.
+
 Cut out first 5 columns: 
 ```
 cut -d " " -f 6- inputfile.haps > outputfile.haps 
 ```
-**It is important to make sure the dimensions corresponds to the dimensions in the .msp.tsv file
+**It is important to make sure the dimensions corresponds to the dimensions in the .msp.tsv file**
 
 Take out the spaces between the zeros and ones: 
 ```
 sed 's/ //g' inputfile.haps > outputfiles.haps 
 ```
-**File is ready to be used in LAA models 
+*File is ready to be used in LAAA models*
 
 4. Convert phased binary files back to vcf format 
 ```
@@ -170,10 +171,8 @@ rfmix -f inputfile_query.vcf -r inputfile_reference.vcf -m sample_map_SAC -g gen
 3. msp.tsv - using this file for LAAA model, provides ancestry per allele
 4. fb.tsv
 
-
-**Additional modifications for inputfiles for LAAA model to provide ancestry information. You need to make a .msp.tsv for all five ancestries, therefore the ancestry of interest is coded as 2 and all the other ancestries are coded as 1. As well as indicating all the genomic regions per file, since RFMix provides only the collapsed files, which does not contain all the genomic positions. 
-
-Script used to modify the RFMix Viterbri file to use in the LAAA model ```Make_viterbi_files.R```. 
+*Additional modifications for inputfiles for LAAA model to provide ancestry information. You need to make a .msp.tsv for all five ancestries, therefore the ancestry of interest is coded as 1 and all the other ancestries are coded as 0. As well as indicating all the genomic regions per file, since RFMix provides only the collapsed files, which does not contain all the genomic positions* 
+ 
 
 ## 06 - Local ancestry adjusted association models 
 
@@ -186,7 +185,6 @@ Steps:
 4. Use STEAM to permute data to determine significance theshold 
 5. Summarise and visualise results 
 
-
 #### 01-Create dosage files: 
 
 Inputfiles required in order to run ```create_dose_frame.py``` 
@@ -198,6 +196,12 @@ Inputfiles required in order to run ```create_dose_frame.py```
 5. Begin genomic position 
 6. End genomic position 
 
+Script used to modify the RFMix Viterbri file to use in the LAAA model ```Make_of_viterbi_files.R```.
+
+Cut out header and first 3 columns of viterbri file. 
+```
+sed '1d' inputfile | cut -f 4- > outputfile
+```
 Make SNP info file. 
 ```
 for i in {1..22}; do awk '{print $3, $4, $5}' SAC_1000G_filtered_chr${i}_phased > /home/yolandi01/05-LAAA_model/01-Make_dosage_files/SNP_info_file_chr${i} ; done 
@@ -209,11 +213,40 @@ Output three important files for each ancestry required for statistical analysis
 2. allele dose file (0 = major allele, 1 = minor allele)
 3. ancestry + alelle dose file (0 = Minor allele + ancestry not on the same haplotype; 1 = Minor allele + ancestry are on the same haplotype)
 
-**Need to obtain all three files for each ancestry 
+***Need to obtain all three files for each ancestry***
 
 
 #### 02-Fit statistical models 
 
+The script specifying the model ```models.R``` should be updated to the statistical model of interest. The covariate list should always include the correction for genome-wide ancestry propotions. This file needs to be updated according to your data and confounding factors. 
+
+
+**We are specifying 4 different models with ```models.R```:** 
+
+1. **Null model:** _glm_(trait ~ age + gender + genome-wide ancestry proportions)
+2. **Allele model:** _glm_(trait ~ age + gender + genome-wide ancestry proportions + allele_dose)
+3. **Ancestry model:** _glm_(trait ~ age + gender + genome-wide ancestry proportions + ancestry_dose)
+4. **LAAA model:** _glm_(trait ~ age + gender + genome-wide ancestry proportions + allele_dose + ancestry_dose + allele_ancestry_dose)
+
+
+#### 03-Run the models 
+
+Modify the input and output files as needed in ```run_models.R``` script used to run the models. 
+You also require a file containing all the phenotype information of your cohort. 
+
+Command used to run ```run_models.R```. 
+
+
+
+**Output variables file:**
+
+The following output are obtained after running your statistical models: 
+
+
+
+The **anova_p** value in the last column gives us the significant value when the LAAA model is compared to the null model. This will give us an indication if the LAAA model significantly improved when adjusting for both the allele and ancestry dose at the same time, compared to not adjusting for the allele and ancestry dose. 
+
+#### 04-Determine significance threshold with ```STEAM```
 
 
 
