@@ -213,7 +213,7 @@ Output three important files for each ancestry required for statistical analysis
 2. allele dose file (0 = major allele, 1 = minor allele)
 3. ancestry + alelle dose file (0 = Minor allele + ancestry not on the same haplotype; 1 = Minor allele + ancestry are on the same haplotype)
 
-***Need to obtain all three files for each ancestry***
+***Need to obtain all three dosage files for each ancestry***
 
 
 #### 02-Fit statistical models 
@@ -221,12 +221,11 @@ Output three important files for each ancestry required for statistical analysis
 The script specifying the model ```models.R``` should be updated to the statistical model of interest. The covariate list should always include the correction for genome-wide ancestry propotions. This file needs to be updated according to your data and confounding factors. 
 
 
-**We are specifying 4 different models with ```models.R```:** 
+**We are specifying 3 different models with ```models.R```:** 
 
 1. **Null model:** _glm_(trait ~ age + gender + genome-wide ancestry proportions)
 2. **Allele model:** _glm_(trait ~ age + gender + genome-wide ancestry proportions + allele_dose)
-3. **Ancestry model:** _glm_(trait ~ age + gender + genome-wide ancestry proportions + ancestry_dose)
-4. **LAAA model:** _glm_(trait ~ age + gender + genome-wide ancestry proportions + allele_dose + ancestry_dose + allele_ancestry_dose)
+3. **LAAA model:** _glm_(trait ~ age + gender + genome-wide ancestry proportions + allele_dose + ancestry_dose + allele_ancestry_dose)
 
 
 #### 03-Run the models 
