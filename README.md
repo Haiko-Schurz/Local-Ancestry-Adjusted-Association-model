@@ -220,7 +220,6 @@ Output three important files for each ancestry required for statistical analysis
 
 The script specifying the model ```models.R``` should be updated to the statistical model of interest. The covariate list should always include the correction for genome-wide ancestry propotions. This file needs to be updated according to your data and confounding factors. 
 
-
 **We are specifying 3 different models with ```models.R```:** 
 
 1. **Null model:** _glm_(trait ~ age + gender + genome-wide ancestry proportions)
@@ -231,11 +230,7 @@ The script specifying the model ```models.R``` should be updated to the statisti
 #### 03-Run the models 
 
 Modify the input and output files as needed in ```run_models.R``` script used to run the models. 
-You also require a file containing all the phenotype information of your cohort. 
-
-Command used to run ```run_models.R```. 
-
-
+You also require a file containing all the phenotype information of your cohort. Example ```Phenotype_SAC.txt```
 
 **Output variables file:**
 
@@ -243,11 +238,14 @@ The following output are obtained after running your statistical models:
 
 
 
-The **anova_p** value in the last column gives us the significant value when the LAAA model is compared to the null model. This will give us an indication if the LAAA model significantly improved when adjusting for both the allele and ancestry dose at the same time, compared to not adjusting for the allele and ancestry dose. 
+
+The **anova_p** value in the last column gives us the significant value when the LAAA model is compared to the null model. This will give us an indication if the LAAA model significantly improved whilst  adjusting for both the allele and ancestry dose at the same time, compared to not adjusting for the allele and ancestry dose. 
 
 #### 04-Determine significance threshold with ```STEAM```
 
+https://github.com/kegrinde/STEAM
 
+Inputfiles required: 
 
 
 
