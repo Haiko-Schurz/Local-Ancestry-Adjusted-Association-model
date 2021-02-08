@@ -38,12 +38,37 @@ Example data is genotyped on the Illumina MEGA array (~1.7M markers). 420 TB cas
 - STEAM
 
 
+## Prepare reference file 
+Download Reference data from the 1000GP website: 
+
+```wget ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr*.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz```
+
+**Populations used in 1000GP:** 
+GBR (40)
+Han Chinese (43)
+Eson(20)
+LWK(20)
+
+**Populations used in external databases:**
+Malay (40)
+Nama (40)
+
+Before merging reference datasets, make sure the bim file format are the same for all datasets and all used the hg19 build for chromosome positions
+Change chromosome positions to rsIDs: 
+
+Convert vcf files to plink binary format: 
+
+``` plink --vcf inputfile --biallelic-only strict --recode --make-bed --out outputfile```
+
+
+Merge diffferent reference files with each other: 
+
 ## 01-Initial quality control 
-Remove any individual missingness of individuals, any SNPs that were in HWE and remove chromosome 23 before merging with ancestral population. 
+Remove any individual missingness of individuals, genotype missingness and remove chromosome 23 before merging with ancestral population. 
 Check for any phenotypic information of population under investigation, in order to remove any indivual who are either < 18 of age or have any missing phenotypic      information, such as age or sex or disease status. 
 
 ```
-plink --bfile filename --mind 0.1 --hwe 0.05 -chr1-22 --make-bed --out outputfile
+plink --bfile filename --mind 0.1 --geno 0.05 -chr1-22 --make-bed --out outputfile
 ```
 **Therefore, all filtering for participants occur before merging, since we want to remove them from the begining and exclude them from analysis. 
 
