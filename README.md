@@ -54,14 +54,11 @@ Malay (40)
 Nama (40)
 
 Before merging reference datasets, make sure the bim file format are the same for all datasets and all used the hg19 build for chromosome positions
-Change chromosome positions to rsIDs: 
 
 Convert vcf files to plink binary format: 
 
 ``` plink --vcf inputfile --biallelic-only strict --recode --make-bed --out outputfile```
-
-
-Merge diffferent reference files with each other: 
+ 
 
 ## 01-Initial quality control 
 Remove any individual missingness of individuals, genotype missingness and remove chromosome 23 before merging with ancestral population. 
@@ -271,6 +268,12 @@ The **anova_p** value in the last column gives us the significant value when the
 https://github.com/kegrinde/STEAM
 
 Inputfiles required: 
+
+1. Sample map - window sizes of RFMix to represent the ancestral haplotype LD blocks, therefore obtained from viterbri file ("cM" , "chr")
+2. Ancestral proportions - global ancestry proportions of eacg contributing ancestry
+3. Generations since admixture occurred (g)
+
+```
 
 
 
